@@ -1,0 +1,41 @@
+########################
+# Load the data
+########################
+
+data(named_tf)
+data(named_metadata_tf)
+data(encode690)
+
+########################
+# Define UI for the application
+########################
+
+shinyUI(fluidPage(
+  
+  titlePanel("FIMObyGene"),
+  sidebarLayout(position = "left",
+                sidebarPanel(width=3,
+                             selectInput("transcriptionFactor", "Select FIMO Transcription Factor", named_tf),
+                             selectInput("encodeTF", "Select Encode Transcription Factor",encode690$target),
+                             selectInput("eQTL", "Select eQTL of interest", eQTLdata),
+                             selectInput("FP", "Select footprint of interest", fpdata),
+                             selectInput("HS", "Select HS of interest", hsdata),
+                             textInput("geneName", "Enter Gene of interest", value="ORMDL3"),
+                             textInput("downloadName", "Download Name"),
+                             downloadButton("downloadData", "Download Data")
+                ),
+                
+                
+                mainPanel(
+                  tabsetPanel(id="inTabset",
+                              tabPanel("Scored Motifs in Transcribed Region", value="panel1", DT::dataTableOutput("mytable1")),
+                              tabPanel("FIMO TF Model", value="panel2", plotOutput("tfplot")),
+                              #tabPanel("Gene Model", value="panel3", plotlyOutput("ggPlot")),
+                              tabPanel("Encode TF Model", value="panel4", plotOutput("tfgenePlot")),
+                              tabPanel("visByGene", value="panel5", plotOutput("visByGene")),
+                              tabPanel("Metadata",value="panel3", DT::dataTableOutput("mytable2"))
+                  )
+                )
+  )
+)
+)
