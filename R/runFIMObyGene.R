@@ -1,11 +1,11 @@
 ######## Shiny APP ########
-### FIMObyGene ###
+### visByGene ###
 
-#'shiny interface to Kimbie's CISBP FIMO scan TF bed files
+#'shiny interface for visualizing datasets
 #'@import shiny
 #'@param host character string with inet ip address
 #'@export
-runFIMObyGene<-function(host){
-  myapp = system.file("shinyApps",package="FIMObyGene")
+runvisByGene<-function(host){
+  myapp = system.file("shinyApps",package="visByGene")
   runApp(myapp, host=host)
 }
