@@ -34,21 +34,21 @@ Row {data-height=300, data-width=150}
 
 ### Abstract 
 
-<div id="ecran" style='overflow:auto;height:300px'>
-
 Visualization can often be the key to discovering patterns and distilling the massive amount of biological information that rise from the rapid growth of high throughput sequencing experiments. The R package visByGene is a preliminary attack on synthesizing available experiment and annotation data to understand mechanisms of disease using R/Bioconductor (www.bioconductor.org) interfaces to high-resolution genomic data assembled in MongoDB, Bioconductor annotation packages, and tabix indexed files. We developed visByGene to utilize R/Bioconductor packages such as ggplot2, plotly, ensembldb, AnnotationHub, mongolite, GenomicScores, and others to provide users with specialized interactive shiny based visualizations. These visualizations allow users to easily query hundreds of Gb of data in thousands of data resources such as eQTL studies, DNAse I hypersensitivity regions, and transcription factor binding site data and visualize the results as annotated gene models. These queries are gene based with a scalable window parameter. Additional annotations can be overlayed onto the gene model by selecting new experimental results, and the combined results can be easily downloaded as a csv for later use. Further work is being done to utilize the hover text and plot linking features of plotly graphics to enrich the user experience.
-</div>
 
 ### Introduction 
 
 - Effective visualization tools coupled with computational and statistical methodologies helps researchers, clinicians to extract useful knowledge from genomic data. 
 
-- Our R package visByGene is a preliminary attack on visualizing available experiment and annotation data to understand mechanisms of disease using R/Bioconductor (www.bioconductor.org) interfaces to high-resolution genomic data assembled in MongoDB, Bioconductor annotation packages, and tabix indexed files.
+- In our work, we have assembled hundreds of gigabytes of data from public genomic experiments and made a unified framework for querying this data to produce interactive web based graphics in a software package we call "visByGene".
 
-- This can unravel rare genomic events essential to understanding the etiology of complex diseases and developing innovative technical clinical solutions.
+- When a user selects a gene and data source, the software queries our data resources, plots the gene model, and adds the annotation data.
+
+- Such tools help unravel rare genomic events essential to understanding the etiology of complex diseases and developing innovative technical clinical solutions.
 
 
 ```{r global, include=FALSE}
+
 # load data 
 load("/Users/reshg/Documents/GITHUB/visByGene/data/encode690.rda")
 load("/Users/reshg/Documents/GITHUB/visByGene/data/named_tf.rda")
@@ -57,6 +57,7 @@ eQTLdata = read.csv("~/Documents/GITHUB/visByGene/inst/shinyApps/eQTL.csv")
 fpdata = read.csv("~/Documents/GITHUB/visByGene/inst/shinyApps/FP.csv")
 hsdata = read.csv("~/Documents/GITHUB/visByGene/inst/shinyApps/HS.csv")
 tfdata = read.csv("~/Documents/GITHUB/visByGene/inst/shinyApps/TF.csv") 
+
 ```
 
 
@@ -65,7 +66,101 @@ tfdata = read.csv("~/Documents/GITHUB/visByGene/inst/shinyApps/TF.csv")
 ########################
 # Functions
 ########################
+ggvisForSymbol = function (sym, resource = EnsDb.Hsapiens.v79::EnsDb.Hsapiens.v79, 
+                           columnsKept = c("gene_id", "tx_id"), yval = 1, arrmm=1.5, viewtype="transcripts", ...) 
+{
+  exs = GenomicFeatures::exons(resource, filter = SymbolFilter(sym), columns = columnsKept, 
+                               ...)
+  if (viewtype == "exons") exs = unique(exs)
+  rd = reduce(exs)
+  fo = findOverlaps(rd, exs)
+  gr = split(subjectHits(fo), queryHits(fo))
+  pp = function(n) (seq_len(n)-1)/n
+  st = start(exs)
+  en = end(exs)
+  if (viewtype == "exons") {
+    ys = lapply(gr, function(x) pp(length(x)))
+    yvs = unlist(ys) #1+(0:(nel-1))/nel
+  }
+  else if (viewtype == "transcripts") {
+    tnms = exs$tx_id
+    ft = factor(tnms)
+    yvs = (as.numeric(ft)-1)/length(levels(ft))
+  }
+  else stop("viewtype not %in% c('exons', 'transcripts')")
+  newdf = data.frame(st, en, yv = yvs, sym = sym)
+  rng = range(exs)
+  df = data.frame(range = c(start(rng), end(rng)), yval = rep(yval,2)) 
+  strn = as.character(strand(exs)[1])
+  ardir = ifelse(strn=="+", "last", "first")
+  pl = ggplot(df, aes(x = range, y = yval)) + 
+    geom_segment(aes(x = st, y = yv, xend = en, yend = yv, colour = sym),       data = newdf, arrow=arrow(ends=ardir, length=unit(arrmm, "mm")))
+  #ggplotly(pl)
+  pl + xlab(as.character(seqnames(exs)[1]))
+}
 
+plotlyForSymbol = function (sym, resource = EnsDb.Hsapiens.v79::EnsDb.Hsapiens.v79,
+   columnsKept = c("gene_id", "tx_id"), yval = 1, arrmm=1.5, viewtype="transcripts", ...)
+{
+ require(plotly)
+  exs = GenomicFeatures::exons(resource, filter = SymbolFilter(sym), columns = columnsKept,
+     ...)
+if (viewtype == "exons") exs = unique(exs)
+rd = reduce(exs)
+fo = findOverlaps(rd, exs)
+gr = split(subjectHits(fo), queryHits(fo))
+pp = function(n) (seq_len(n)-1)/n
+st = start(exs)
+en = end(exs)
+
+if (viewtype == "exons") {
+  ys = lapply(gr, function(x) pp(length(x)))
+  yvs = unlist(ys) #1+(0:(nel-1))/nel
+}
+else if (viewtype == "transcripts") {
+  tnms = exs$tx_id
+  ft = factor(tnms)
+  yvs = (as.numeric(ft)-1)/length(levels(ft))
+}
+else stop("viewtype not %in% c('exons', 'transcripts')")
+newdf = data.frame(st, en, yv = yvs, sym = sym)
+rng = range(exs)
+df = data.frame(range = c(start(rng), end(rng)), yval = rep(yval,2))
+strn = as.character(strand(exs)[1])
+ardir = ifelse(strn=="+", "start", "end")
+pl = plot_ly(df, x =~ range, y =~ yval, type = 'scatter', mode = 'markers',showlegend = FALSE) %>%
+  add_segments(x=newdf$st,xend=newdf$en,y=newdf$yv,yend=newdf$yv,
+               text=paste(names(exs),"start:",newdf$st,"end:",newdf$en),hoverinfo='text',
+               showlegend = FALSE)%>%
+  add_annotations(x = newdf$st,
+                  y = newdf$yv,
+                  showarrow = TRUE,
+                  arrowhead = 1,
+                  arrowsize=1,
+                  axref="x",
+                  ayref="y",
+                  ax=newdf$en,
+                  ay=newdf$yv,
+                  arrowside=ardir,
+                  text=rep("",nrow(newdf)),arrowcolor="blue",yanchor="top"
+  )%>%
+  layout( xaxis = list(title = as.character(seqnames(exs)[1])))
+pl
+}
+edb = EnsDb.Hsapiens.v75::EnsDb.Hsapiens.v75
+
+orm = GRanges("chr17", IRanges(38077296, 38083884), strand="-") # ORMDL3
+l1 = enc690ByFactor("CEBPB")
+dd = lapply(l1, function(x) subsetByOverlaps(x, orm+10000))
+lens = sapply(dd,length)
+cls = sapply(dd, function(x) metadata(x)$cell)
+cls = rep(cls, lens)
+ee = do.call(rbind, lapply(dd, as.data.frame))
+ee$cell = factor(as.character(cls))
+ee$yval = 1+(as.numeric(factor(as.character(cls)))-1)/length(unique(cls))
+cellinfo=data.frame(cell=c("HepG2","A549","HeLa-S3","IMR90"), info=c("Human liver cancer cell line","Human lung cancer cell line",
+                                                                     "Human cervical cancer cell line","Normal lung fibroblast"),stringsAsFactors=FALSE)
+ee=merge(ee,cellinfo)
 
 visByGene <- function(myeqtl, myfp, mytf, mysymbol){
   require(Gviz)
@@ -98,7 +193,7 @@ visByGene <- function(myeqtl, myfp, mytf, mysymbol){
   genome(mysubtf)="hg19"
   atrack1 <- AnnotationTrack(mysubtf, name = mytf)
   dtrack1=DataTrack(data=mysubtf$mcols.pvalue, start=start(mysubtf), end=end(mysubtf),
-                   chromosome = mychr, genome = "hg19", name = mytf, background.panel = "#FFFEDB",
+                   chromosome = mychr, genome = "hg19", name = "TF", background.panel = "#FFFEDB",
                    background.title = "darkblue")
   #tfp = plotTracks(dtrack)
   # FOR FP data 
@@ -117,7 +212,7 @@ visByGene <- function(myeqtl, myfp, mytf, mysymbol){
   genome(mysubfp)="hg19"
   atrack1 <- AnnotationTrack(mysubfp, name = myfp)
   dtrack2=DataTrack(data=mysubfp$mcols.stat, start=start(mysubfp), end=end(mysubfp),
-                   chromosome = mychr, genome = "hg19", name = myfp)
+                   chromosome = mychr, genome = "hg19", name = "FP")
   #fpp = plotTracks(dtrack)
   # FOR eQTL data 
   eqtlcoll = mongo(url="mongodb://172.27.105.48",
@@ -136,10 +231,10 @@ visByGene <- function(myeqtl, myfp, mytf, mysymbol){
   genome(mysubeqtl)="hg19"
   atrack1 <- AnnotationTrack(mysubeqtl, name = myeqtl)
   dtrack3=DataTrack(data=mysubeqtl$mcols.qvalue, start=start(mysubeqtl), end=end(mysubeqtl),
-                   chromosome = mychr, genome = "hg19", name = myeqtl,  background.panel = "#FFFEDB",
+                   chromosome = mychr, genome = "hg19", name = "eQTL",  background.panel = "#FFFEDB",
                    background.title = "darkblue")
   #eqtlp = plotTracks(dtrack)
-  visplot = plotTracks(list(gtrack,biomtrack,dtrack1,dtrack2,dtrack3,itrack), sizes=c(3,7,5,6,6,6))
+  visplot = plotTracks(list(gtrack,biomtrack,dtrack1,dtrack2,dtrack3,itrack), sizes=c(3,7,5,5,5,10))
   
 }
 
@@ -234,7 +329,7 @@ ploteQTL <- function(myeqtl, mysymbol){
   gtrack <- GenomeAxisTrack()
   itrack <- IdeogramTrack(genome = "hg19", chromosome = mychr)
   dtrack=DataTrack(data=mysub$mcols.qvalue, start=start(mysub), end=end(mysub),
-                   chromosome = mychr, genome = "hg19", name = myeqtl)
+                   chromosome = mychr, genome = "hg19", name = "eqtl")
   biomtrack <- BiomartGeneRegionTrack(genome = "hg19", chromosome = mychr, symbol=mysymbol, name=mysymbol)
   eqtlp = plotTracks(list(dtrack, gtrack, biomtrack), sizes=c(2,2,5))
 }
@@ -272,39 +367,6 @@ plotHS <- function(myhs, mysymbol){
 }
 
 
-
-ggvisForSymbol = function (sym, resource = EnsDb.Hsapiens.v79::EnsDb.Hsapiens.v79, 
-                           columnsKept = c("gene_id", "tx_id"), yval = 1, arrmm=1.5, viewtype="transcripts", ...) 
-{
-  exs = GenomicFeatures::exons(resource, filter = SymbolFilter(sym), columns = columnsKept, 
-                               ...)
-  if (viewtype == "exons") exs = unique(exs)
-  rd = reduce(exs)
-  fo = findOverlaps(rd, exs)
-  gr = split(subjectHits(fo), queryHits(fo))
-  pp = function(n) (seq_len(n)-1)/n
-  st = start(exs)
-  en = end(exs)
-  if (viewtype == "exons") {
-    ys = lapply(gr, function(x) pp(length(x)))
-    yvs = unlist(ys) #1+(0:(nel-1))/nel
-  }
-  else if (viewtype == "transcripts") {
-    tnms = exs$tx_id
-    ft = factor(tnms)
-    yvs = (as.numeric(ft)-1)/length(levels(ft))
-  }
-  else stop("viewtype not %in% c('exons', 'transcripts')")
-  newdf = data.frame(st, en, yv = yvs, sym = sym)
-  rng = range(exs)
-  df = data.frame(range = c(start(rng), end(rng)), yval = rep(yval,2)) 
-  strn = as.character(strand(exs)[1])
-  ardir = ifelse(strn=="+", "last", "first")
-  pl = ggplot(df, aes(x = range, y = yval)) + 
-    geom_segment(aes(x = st, y = yv, xend = en, yend = yv, colour = sym),       data = newdf, arrow=arrow(ends=ardir, length=unit(arrmm, "mm")))
-  #ggplotly(pl)
-  pl + xlab(as.character(seqnames(exs)[1]))
-}
 
 enc690ByFactor = function (factor=myTF,sym=mysymbol,filtrange=NULL) 
 {
@@ -356,6 +418,7 @@ enc690ByFactor = function (factor=myTF,sym=mysymbol,filtrange=NULL)
 }
 ```
 
+
 Row {data-width=800, data-height=950}
 ----------------------------------------------------------------------------------------------------------------------------------------------
 ### Methods & Results
@@ -365,7 +428,6 @@ Row {data-width=800, data-height=950}
 
 shinyApp(
   ui = fluidPage(
-    includeScript(path="script.js"),
     titlePanel("visByGene"),
     sidebarLayout(position = "left",
                   sidebarPanel(width=3,
@@ -389,7 +451,8 @@ shinyApp(
                                 #tabPanel("DNAse Hypersensitivity Model", value="panel3", plotOutput("hsplot")),
                                 tabPanel("FIMO TF Model", value="panel4", plotOutput("tfplot")),
                                 tabPanel("Encode TF Model", value="panel5", plotOutput("tfgenePlot")),
-                                #tabPanel("CEBPB binding nead ORMDL3", value="panel5", plotlyOutput("plotlySymbol")),
+                                tabPanel("CEBPB binding nead ORMDL3", value="panel5", plotlyOutput("plotlySymbol")),
+                                tabPanel("ggplot", value="panel9", plotlyOutput("ggplot")),
                                 tabPanel("visByGene", value="panel6", plotOutput("visByGene")),
                                 tabPanel("TF Metadata",value="panel7", DT::dataTableOutput("mytable2")),
                                 tabPanel("References",value="panel8",textOutput("text1"))
@@ -448,22 +511,23 @@ server = function(input, output, session){
   output$fpplot = renderPlot(plotFP(input$fp, input$geneName))
   
   output$eqtlplot = renderPlot(ploteQTL(input$eQTL, input$geneName))
-  
+  require(plotly)
+  output$ggPlot = renderPlotly(ggvisForSymbol(input$geneName))
   #output$hsplot = renderPlot(plotHS(input$hs, input$geneName))
   
   
   #output$visByGene = renderPlot(plotHS(input$hs, input$geneName))
   
   output$tfgenePlot = renderPlot(enc690ByFactor(input$encodeTF, input$geneName))
-  #output$plotlySymbol = renderPlotly(plotlyForSymbol("ORMDL3", resource=edb) %>%
-                          #add_segments(x=ee$start, xend=ee$end, y=ee$yval, yend=ee$yval,
-	                        #color=ee$cell,showlegend = TRUE, text=paste(ee$cell,":",ee$info),hoverinfo='text')%>% layout(title="CEBPB binding near             ORMDL3",yaxis=list(title="")))
+  output$plotlySymbol = renderPlotly(plotlyForSymbol("ORMDL3", resource=edb) %>%
+                          add_segments(x=ee$start, xend=ee$end, y=ee$yval, yend=ee$yval,
+	                        color=ee$cell,showlegend = TRUE, text=paste(ee$cell,":",ee$info),hoverinfo='text')%>% layout(title="CEBPB binding near ORMDL3",yaxis=list(title="")))
   output$visByGene = renderPlot(visByGene(input$eQTL, input$fp, input$transcriptionFactor, input$geneName))
   #require(plotly)
   output$ggPlot = renderPlotly(ggvisForSymbol(input$geneName))
   
   output$mytable2 = renderDataTable(as.data.frame(metadata_tf), options=list(scrollX=TRUE,pageLength=25))
-  output$text1 <- renderText("Eric Tu, et al. Interactive Exploration on Large Genomic Datasets. 2016 Spring; 2016: UCB/EECS-2016-111, Matteo Gabetta, et al. BigQ: a NoSQL based framework to handle genomic variants in i2b2. BMC         Bioinformatics. 2015")
+  output$text1 <- renderText("Eric Tu, et al. Interactive Exploration on Large Genomic Datasets. 2016 Spring; 2016: UCB/EECS-2016-111, <br> Matteo Gabetta, et al. BigQ: a NoSQL based framework to handle genomic variants in i2b2. BMC Bioinformatics. 2015")
   
 }
 )

@@ -1,7 +1,7 @@
 Package: visByGene
 Title: visByGene
 Description: Shiny Interface to explore eQTL,TF,FP,HS data.
-Version: 0.2
+Version: 0.3
 Author: Shweta Gopaulakrishnan
 Depends: ggplot2, plotly, shiny
 Imports: TFutils, GenomicRanges, Rsamtools, Gviz, GenomeInfoDb
