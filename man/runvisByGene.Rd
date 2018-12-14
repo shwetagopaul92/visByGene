@@ -2,10 +2,10 @@
 % Please edit documentation in R/runvisByGene.R
 \name{runvisByGene}
 \alias{runvisByGene}
-\title{shiny interface to Kimbie's CISBP FIMO scan TF bed files}
+\title{shiny interface to eQTL,HS,FP,TF files}
 \usage{
 runvisByGene()
 }
 \description{
-shiny interface to Kimbie's CISBP FIMO scan TF bed files
+shiny interface to eQTL,HS,FP,TF files
 }
