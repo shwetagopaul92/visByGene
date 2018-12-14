@@ -20,14 +20,14 @@ shinyUI(fluidPage(
   sidebarLayout(position = "left",
                 sidebarPanel(width=3,
                              selectInput("eQTL", "Select eQTL Collection", eQTLdata),
+                             #actionButton("goButton", "Go!"),
+                             #actionButton("addButton", "Add another eQTL"),
                              selectInput("fp", "Select FootPrint Collection", fpdata),
                              #selectInput("hs", "Select Hypersensitivity Collection", hsdata),
                              selectInput("transcriptionFactor", "Select FIMO Transcription Factor Collection", tfdata),
                              selectInput("encodeTF", "Select Encode Transcription Factor",encode690$target ),
                              textInput("geneName", "Enter Gene of interest", value="ORMDL3")
-                             #numericInput("windowSize", "Window Size", 1000),
-                             #textInput("downloadName", "Download Name"),
-                             #downloadButton("downloadData", "Download Data")
+                              
                 ),
                 
                 

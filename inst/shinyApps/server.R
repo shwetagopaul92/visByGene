@@ -107,7 +107,7 @@ plotTF <- function(mytf, mysymbol){
   dtrack=DataTrack(data=mysub$mcols.pvalue, start=start(mysub), end=end(mysub),
                    chromosome = mychr, genome = "hg19", name = mytf)
   biomtrack <- BiomartGeneRegionTrack(genome = "hg19", chromosome = mychr, symbol=mysymbol, name=mysymbol)
-  tfp = plotTracks(list(dtrack, gtrack, biomtrack),sizes=c(1,1,2))
+  tfp = plotTracks(list(dtrack, gtrack, biomtrack, itrack),sizes=c(1,1,2,2))
 }
 
 plotFP <- function(myfp, mysymbol){
@@ -139,7 +139,7 @@ plotFP <- function(myfp, mysymbol){
   dtrack=DataTrack(data=mysub$mcols.stat, start=start(mysub), end=end(mysub),
                    chromosome = mychr, genome = "hg19", name = myfp)
   biomtrack <- BiomartGeneRegionTrack(genome = "hg19", chromosome = mychr, symbol=mysymbol, name=mysymbol)
-  fpp = plotTracks(list(dtrack, gtrack, biomtrack),sizes=c(1,1,2))
+  fpp = plotTracks(list(dtrack, gtrack, biomtrack, itrack),sizes=c(1,1,2,2))
 }
 
 ploteQTL <- function(myeqtl, mysymbol){
@@ -171,7 +171,7 @@ ploteQTL <- function(myeqtl, mysymbol){
   dtrack=DataTrack(data=mysub$mcols.qvalue, start=start(mysub), end=end(mysub),
                    chromosome = mychr, genome = "hg19", name = "eqtl")
   biomtrack <- BiomartGeneRegionTrack(genome = "hg19", chromosome = mychr, symbol=mysymbol, name=mysymbol)
-  eqtlp = plotTracks(list(dtrack, gtrack, biomtrack), sizes=c(2,2,5))
+  eqtlp = plotTracks(list(dtrack, gtrack, biomtrack, itrack), sizes=c(1,1,2,2))
 }
 
 plotHS <- function(myhs, mysymbol){
@@ -203,7 +203,7 @@ plotHS <- function(myhs, mysymbol){
   dtrack=DataTrack(data=mysub$mcols.qValue, start=start(mysub), end=end(mysub),
                    chromosome = mychr, genome = "hg19", name = myhs)
   biomtrack <- BiomartGeneRegionTrack(genome = "hg19", chromosome = mychr, symbol=mysymbol, name=mysymbol)
-  hsp = plotTracks(list(dtrack, gtrack, biomtrack), sizes=c(2,2,5))
+  hsp = plotTracks(list(dtrack, gtrack, biomtrack, itrack), sizes=c(1,1,2,2))
 }
 
 ggvisForSymbol = function (sym, resource = EnsDb.Hsapiens.v79::EnsDb.Hsapiens.v79, 
@@ -234,7 +234,7 @@ ggvisForSymbol = function (sym, resource = EnsDb.Hsapiens.v79::EnsDb.Hsapiens.v7
   strn = as.character(strand(exs)[1])
   ardir = ifelse(strn=="+", "last", "first")
   pl = ggplot(df, aes(x = range, y = yval)) + 
-    geom_segment(aes(x = st, y = yv, xend = en, yend = yv, colour = sym),       data = newdf, arrow=arrow(ends=ardir, length=unit(arrmm, "mm")))
+    geom_segment(aes(x = st, y = yv, xend = en, yend = yv, colour = sym),data = newdf, arrow=arrow(ends=ardir, length=unit(arrmm, "mm")))
   #ggplotly(pl)
   pl + xlab(as.character(seqnames(exs)[1]))
 }
@@ -246,6 +246,13 @@ ggvisForSymbol = function (sym, resource = EnsDb.Hsapiens.v79::EnsDb.Hsapiens.v7
 ########################
 
 shinyServer(function(input, output, session) {
+  
+  #observeEvent(input$goButton, {
+   # output$eqtlplot = renderPlot(ploteQTL(input$eQTL, input$geneName))
+  #})
+  #observeEvent(input$addButton, {
+   # output$eqtlplot = renderPlot(ploteQTL2(input$eQTL, input$geneName))
+  #})
   
   output$tfplot = renderPlot(plotTF(input$transcriptionFactor, input$geneName))
   
