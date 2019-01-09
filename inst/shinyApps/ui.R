@@ -5,10 +5,15 @@
 data(named_tf)
 data(named_metadata_tf)
 data(encode690)
-eQTLdata = system.file("shinyApps/eQTL.csv",package = "visByGene")
-fpdata = system.file("shinyApps/FP.csv",package = "visByGene")
-hsdata = system.file("shinyApps/HS.csv",package = "visByGene")
-tfdata = system.file("shinyApps/TF.csv",package = "visByGene")
+
+mypath1=system.file(package="visByGene","shinyApps/eQTL.csv")
+eQTLdata=read.csv(mypath1,h=FALSE,stringsAsFactors=FALSE)
+mypath2=system.file(package="visByGene","shinyApps/FP.csv")
+fpdata=read.csv(mypath2,h=FALSE,stringsAsFactors=FALSE)
+mypath3=system.file(package="visByGene","shinyApps/HS.csv")
+hsdata=read.csv(mypath3,h=FALSE,stringsAsFactors=FALSE)
+mypath4=system.file(package="visByGene","shinyApps/TF.csv")
+tfdata=read.csv(mypath4,h=FALSE,stringsAsFactors=FALSE)
 
 ########################
 # Define UI for the application
