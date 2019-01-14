@@ -2,5 +2,4 @@
 
 export(runvisByGene)
 import(shiny)
-importFrom(S4Vectors,metadata)
 importFrom(utils,data)

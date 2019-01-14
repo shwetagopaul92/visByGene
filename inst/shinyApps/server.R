@@ -80,14 +80,12 @@ visByGene <- function(myeqtl, myfp, mytf, mysymbol){
 
 plotTF <- function(mytf, mysymbol){
   require(Gviz)
-  require(TFutils)
-  require(GenomicRanges)
   require(mongolite)
-  mygene = genemodForGviz(sym=mysymbol,resource= EnsDb.Hsapiens.v75::EnsDb.Hsapiens.v75)
-  mychr = seqnames(mygene)[1]
-  mygeneRange = GRanges(mychr, IRanges(start=min(start(mygene)),end=max(end(mygene))))
-  mystart = min(start(mygene))
-  myend = max(end(mygene))
+  mygene = TFutils::genemodForGviz(sym=mysymbol,resource= EnsDb.Hsapiens.v75::EnsDb.Hsapiens.v75)
+  mychr = GenomicRanges::seqnames(mygene)[1]
+  mygeneRange = GenomicRanges::GRanges(mychr, IRanges(start=min(start(mygene)),end=max(end(mygene))))
+  mystart = min(GenomicRanges::start(mygene))
+  myend = max(GenomicRanges::end(mygene))
   tfcoll = mongo(url="mongodb://172.27.105.48",
                  collection = mytf,
                  db = "txregnet"
@@ -97,7 +95,10 @@ plotTF <- function(mytf, mysymbol){
                  '"start" : {"$gte":',mystart,'},',
                  '"end" : {"$lte":',myend,'}}')
   res=tfcoll$find(myquery)
-  mysub=GRanges(res$chr, IRanges(res$start, res$end), mcols=res)
+  validate(
+    need(res != "", "Please select another transcription factor")
+  )
+  mysub=GenomicRanges::GRanges(res$chr, IRanges(res$start, res$end), mcols=res)
   #tf = Rsamtools::TabixFile(paste0("/udd/reshg/tbifiles/tabix_all_tf_new/",mytf,".02_sort.bed.gz"))
   #mysub = importFIMO(tf, mygeneRange)
   genome(mysub)="hg19"
@@ -112,14 +113,12 @@ plotTF <- function(mytf, mysymbol){
 
 plotFP <- function(myfp, mysymbol){
   require(Gviz)
-  require(TFutils)
-  require(GenomicRanges)
   require(mongolite)
-  mygene = genemodForGviz(sym=mysymbol,resource= EnsDb.Hsapiens.v75::EnsDb.Hsapiens.v75)
-  mychr = seqnames(mygene)[1]
-  mygeneRange = GRanges(mychr, IRanges(start=min(start(mygene)),end=max(end(mygene))))
-  mystart = min(start(mygene))
-  myend = max(end(mygene))
+  mygene = TFutils::genemodForGviz(sym=mysymbol,resource= EnsDb.Hsapiens.v75::EnsDb.Hsapiens.v75)
+  mychr = GenomicRanges::seqnames(mygene)[1]
+  mygeneRange = GenomicRanges::GRanges(mychr, IRanges(start=min(start(mygene)),end=max(end(mygene))))
+  mystart = min(GenomicRanges::start(mygene))
+  myend = max(GenomicRanges::end(mygene))
   fpcoll = mongo(url="mongodb://172.27.105.48",
                  collection = myfp,
                  db = "txregnet"
@@ -129,7 +128,10 @@ plotFP <- function(myfp, mysymbol){
                  '"start" : {"$gte":',mystart,'},',
                  '"end" : {"$lte":',myend,'}}')
   res=fpcoll$find(myquery)
-  mysub=GRanges(res$chr, IRanges(res$start, res$end), mcols=res)
+  validate(
+    need(res != "", "Please select another Footprint")
+  )
+  mysub=GenomicRanges::GRanges(res$chr, IRanges(res$start, res$end), mcols=res)
   #tf = Rsamtools::TabixFile(paste0("/udd/reshg/tbifiles/tabix_all_tf_new/",mytf,".02_sort.bed.gz"))
   #mysub = importFIMO(tf, mygeneRange)
   genome(mysub)="hg19"
@@ -144,14 +146,12 @@ plotFP <- function(myfp, mysymbol){
 
 ploteQTL <- function(myeqtl, mysymbol){
   require(Gviz)
-  require(TFutils)
-  require(GenomicRanges)
   require(mongolite)
-  mygene = genemodForGviz(sym=mysymbol,resource= EnsDb.Hsapiens.v75::EnsDb.Hsapiens.v75)
-  mychr = seqnames(mygene)[1]
-  mygeneRange = GRanges(mychr, IRanges(start=min(start(mygene)),end=max(end(mygene))))
-  mystart = min(start(mygene))
-  myend = max(end(mygene))
+  mygene = TFutils::genemodForGviz(sym=mysymbol,resource= EnsDb.Hsapiens.v75::EnsDb.Hsapiens.v75)
+  mychr = GenomicRanges::seqnames(mygene)[1]
+  mygeneRange = GenomicRanges::GRanges(mychr, IRanges(start=min(start(mygene)),end=max(end(mygene))))
+  mystart = min(GenomicRanges::start(mygene))
+  myend = max(GenomicRanges::end(mygene))
   eqtlcoll = mongo(url="mongodb://172.27.105.48",
                    collection = myeqtl,
                    db = "txregnet"
@@ -161,7 +161,10 @@ ploteQTL <- function(myeqtl, mysymbol){
                  '"snp_pos" : {"$gte":',mystart,'},',
                  '"snp_pos" : {"$lte":',myend,'}}')
   res=eqtlcoll$find(myquery)
-  mysub=GRanges(res$chr, IRanges(res$snp_pos, width = 1), mcols=res)
+  validate(
+    need(res != "", "Please select another eQTL")
+  )
+  mysub=GenomicRanges::GRanges(res$chr, IRanges(res$snp_pos, width = 1), mcols=res)
   #tf = Rsamtools::TabixFile(paste0("/udd/reshg/tbifiles/tabix_all_tf_new/",mytf,".02_sort.bed.gz"))
   #mysub = importFIMO(tf, mygeneRange)
   genome(mysub)="hg19"
@@ -176,14 +179,12 @@ ploteQTL <- function(myeqtl, mysymbol){
 
 plotHS <- function(myhs, mysymbol){
   require(Gviz)
-  require(TFutils)
   require(GenomicRanges)
-  require(mongolite)
-  mygene = genemodForGviz(sym=mysymbol,resource= EnsDb.Hsapiens.v75::EnsDb.Hsapiens.v75)
-  mychr = seqnames(mygene)[1]
-  mygeneRange = GRanges(mychr, IRanges(start=min(start(mygene)),end=max(end(mygene))))
-  mystart = min(start(mygene))
-  myend = max(end(mygene))
+  mygene = TFutils::genemodForGviz(sym=mysymbol,resource= EnsDb.Hsapiens.v75::EnsDb.Hsapiens.v75)
+  mychr = GenomicRanges::seqnames(mygene)[1]
+  mygeneRange = GenomicRanges::GRanges(mychr, IRanges(start=min(start(mygene)),end=max(end(mygene))))
+  mystart = min(GenomicRanges::start(mygene))
+  myend = max(GenomicRanges::end(mygene))
   hscoll = mongo(url="mongodb://172.27.105.48",
                  collection = myhs,
                  db = "txregnet"
@@ -193,7 +194,10 @@ plotHS <- function(myhs, mysymbol){
                  '"chromStart" : {"$gte":',mystart,'},',
                  '"chromEnd" : {"$lte":',myend,'}}')
   res=hscoll$find(myquery)
-  mysub=GRanges(res$chrom, IRanges(res$chromStart, res$chromEnd), mcols=res)
+  validate(
+    need(res != "", "Please select another Hypersensitivity collection")
+  )
+  mysub=GenomicRanges::GRanges(res$chrom, IRanges(res$chromStart, res$chromEnd), mcols=res)
   #tf = Rsamtools::TabixFile(paste0("/udd/reshg/tbifiles/tabix_all_tf_new/",mytf,".02_sort.bed.gz"))
   #mysub = importFIMO(tf, mygeneRange)
   genome(mysub)="hg19"
@@ -259,12 +263,14 @@ shinyServer(function(input, output, session) {
   output$fpplot = renderPlot(plotFP(input$fp, input$geneName))
   
   output$eqtlplot = renderPlot(ploteQTL(input$eQTL, input$geneName))
+  
   output$tfgenePlot = renderPlot(enc690ByFactor(input$encodeTF, input$geneName))
   
+  output$hsplot = renderPlot(plotHS(input$hs, input$geneName))
+  
   output$visByGene = renderPlot(visByGene(input$eQTL, input$fp, input$transcriptionFactor, input$geneName))
-  output$mytable2 = renderDataTable(as.data.frame(metadata_tf), options=list(scrollX=TRUE,pageLength=25))
   
-  
+  output$mytable2 = DT::renderDataTable(as.data.frame(metadata_tf), options=list(scrollX=TRUE,pageLength=25))
   
   
 })
