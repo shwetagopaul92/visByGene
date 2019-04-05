@@ -22,7 +22,7 @@ From Github :
 ```
 
 
-<img src="vignettes/www/visByGene.png" width="550">
+<img src="vignettes/www/visByGene.png" width="550" height="550">
 
 
 
