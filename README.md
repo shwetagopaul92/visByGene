@@ -11,11 +11,13 @@ From Github :
 
 - Fire up R
 
-> library(devtools)
-> build(".")
-> install(".")
-> library(visBygene)
-> runvisByGene()
+```{
+  > library(devtools)
+  > build(".")
+  > install(".")
+  > library(visBygene)
+  > runvisByGene()
+}```
 
 
 
