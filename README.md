@@ -22,4 +22,7 @@ From Github :
 ```
 
 
+<img src="vignettes/www/vigByGene.png" width="250">
+
+
 
