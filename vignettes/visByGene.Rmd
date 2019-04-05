@@ -1,5 +1,5 @@
 ---
-title: "visByGene"
+title: "visByGene - ONLY FOR ILLUSTRATION PURPOSE FOR A POSTER"
 output: 
   flexdashboard::flex_dashboard:
     orientation: rows
